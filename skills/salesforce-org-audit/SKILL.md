@@ -29,34 +29,51 @@ confirmation. Install explicitly, as above, before running unattended.
 | Goal | Command |
 |---|---|
 | Full audit, human-readable | `sf audit security --target-org myOrg` |
-| Full audit, machine-readable | `sf audit security --target-org myOrg --format json --output ./reports` |
+| Full audit, machine-readable | `sf audit security --target-org myOrg --json` |
 | Client-ready branded report | `sf audit security --target-org myOrg --format executive --prepared-for "Acme Ltd"` |
 | Gate a pipeline | `sf audit security --target-org myOrg --fail-on HIGH` |
 | Subset of checks | `sf audit security --target-org myOrg --checks guest-user-access,apex-sharing` |
 | See available check IDs | `sf audit list` |
 | Posture drift over time | `sf audit history --target-org myOrg` |
 | Compare two runs | `sf audit diff baseline.json current.json` |
+| Persist a report for later diffing | `sf audit security --target-org myOrg --format json --output ./reports` |
 | Over-privileged connected apps | `sf audit apps --target-org myOrg --since 7` |
 | Preserve free event logs | `sf audit events pull --target-org myOrg` |
 | Reconstruct an actor's activity | `sf audit timeline --window yesterday --seed ip:203.0.113.50` |
 
 Run any command with `--help` for its full flag set.
 
-## Reading the JSON report
+## Machine-readable output
 
-Use `--format json` whenever you intend to reason over results. The report lands at
-`<output>/sf-audit-<orgId>-<timestamp>.json` — **the timestamp means you cannot
-predict the filename.** Glob for the newest file rather than constructing the path:
+Pass `--json` to any command. Human progress logging is suppressed and the result
+is emitted on stdout in the standard envelope:
 
 ```bash
-sf audit security --target-org myOrg --format json --output ./reports
+sf audit security --target-org myOrg --json
+```
+
+```json
+{ "status": 0, "result": { "healthScore": 61, "grade": "D",
+  "findings": [...], "attackChains": [...] }, "warnings": [] }
+```
+
+Errors come back the same way — `{"status": 1, "name": ..., "message": ...}` —
+so parse the envelope rather than scraping stderr. Setting `SF_CONTENT_TYPE=JSON`
+in the environment has the same effect when you cannot control the argv.
+
+**Prefer `--json` over `--format json`.** The latter writes a *file* named
+`sf-audit-<orgId>-<timestamp>.json`; the timestamp means you cannot predict the
+path. Use it only when you want the report persisted for a later `sf audit diff`,
+and then glob for it rather than constructing the name:
+
+```bash
 ls -t ./reports/sf-audit-*.json | head -1
 ```
 
-Top level: `healthScore` (0–100), `grade` (A–F), `findings[]`, `attackChains[]`,
-`orgId`, `isSandbox`. Each finding carries `checkId`, `riskLevel`, `title`,
-`detail`, `remediation`, `complianceTags[]`, and two booleans that decide how you
-report it: `passed` and `inconclusive`.
+Report top level: `healthScore` (0–100), `grade` (A–F), `findings[]`,
+`attackChains[]`, `orgId`, `isSandbox`. Each finding carries `checkId`,
+`riskLevel`, `title`, `detail`, `remediation`, `complianceTags[]`, `passed`
+and `inconclusive`.
 
 ## Interpreting the report
 
@@ -84,9 +101,10 @@ internals.
 
 | Mistake | Do this instead |
 |---|---|
-| Constructing the report path by hand | Glob `sf-audit-*.json` and take the newest |
+| Scraping progress logs off stdout | Pass `--json` — logging is suppressed and the result is the only output |
+| Using `--format json` to read results | That writes a timestamped file; `--json` puts it on stdout |
 | Running against production first | Start on a sandbox to size the output and confirm permissions |
-| `--format html` then asking the model to read it | Use `--format json` for reasoning, `html`/`executive` for people |
+| `--format html` then asking the model to read it | Use `--json` for reasoning, `html`/`executive` for people |
 | Requesting `View All Data` to clear a blind spot | Only one probe needs it; it reports inconclusive by design |
 | Treating a sandbox grade as the production grade | Check `isSandbox` before quoting a score |
 
