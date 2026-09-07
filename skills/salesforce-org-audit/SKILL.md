@@ -32,6 +32,7 @@ confirmation. Install explicitly, as above, before running unattended.
 | Full audit, machine-readable | `sf audit security --target-org myOrg --json` |
 | Client-ready branded report | `sf audit security --target-org myOrg --format executive --prepared-for "Acme Ltd"` |
 | Gate a pipeline | `sf audit security --target-org myOrg --fail-on HIGH` |
+| Gate, and fail on blind spots too | `sf audit security --target-org myOrg --fail-on HIGH --fail-on-inconclusive` |
 | Subset of checks | `sf audit security --target-org myOrg --checks guest-user-access,apex-sharing` |
 | See available check IDs | `sf audit list` |
 | Posture drift over time | `sf audit history --target-org myOrg` |
@@ -60,6 +61,21 @@ sf audit security --target-org myOrg --json
 Errors come back the same way — `{"status": 1, "name": ..., "message": ...}` —
 so parse the envelope rather than scraping stderr. Setting `SF_CONTENT_TYPE=JSON`
 in the environment has the same effect when you cannot control the argv.
+
+A non-zero exit does not suppress the report: `--json --fail-on HIGH` returns the
+full result *and* exits 1, so read the envelope rather than inferring from the code.
+
+### Exit codes
+
+| Code | Meaning |
+|-----:|---------|
+| `0` | Audit completed; nothing the caller asked to fail on |
+| `1` | Findings at or above `--fail-on` |
+| `2` | The audit could not run — auth, connection, or bad flags |
+| `3` | Ran, but checks could not gather evidence (`--fail-on-inconclusive` only) |
+
+`3` is how you tell "this org is fine" apart from "the audit user could not see
+enough to judge". Requires `@cclabsnz/sf-audit` 1.9.0 or later.
 
 **Prefer `--json` over `--format json`.** The latter writes a *file* named
 `sf-audit-<orgId>-<timestamp>.json`; the timestamp means you cannot predict the
