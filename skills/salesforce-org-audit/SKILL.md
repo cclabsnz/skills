@@ -52,22 +52,25 @@ Requires `@cclabsnz/sf-audit` 1.10.0 or later.
 
 ## Quick reference
 
+Every row an agent would run carries `--json`. The two marked *for people* are the
+exceptions — they exist to be read by a human, not parsed.
+
 | Goal | Command |
 |---|---|
-| Full audit, human-readable | `sf audit security --target-org myOrg` |
-| Full audit, machine-readable | `sf audit security --target-org myOrg --json --digest` |
 | Check coverage before auditing | `sf audit preflight --target-org myOrg --json` |
-| Client-ready branded report | `sf audit security --target-org myOrg --format executive --prepared-for "Acme Ltd"` |
-| Gate a pipeline | `sf audit security --target-org myOrg --fail-on HIGH` |
-| Gate, and fail on blind spots too | `sf audit security --target-org myOrg --fail-on HIGH --fail-on-inconclusive` |
-| Subset of checks | `sf audit security --target-org myOrg --checks guest-user-access,apex-sharing` |
-| See available check IDs | `sf audit list` |
-| Posture drift over time | `sf audit history --target-org myOrg` |
-| Compare two runs | `sf audit diff baseline.json current.json` |
+| Full audit | `sf audit security --target-org myOrg --json --digest` |
+| Full audit, every detail | `sf audit security --target-org myOrg --json` |
+| Gate a pipeline | `sf audit security --target-org myOrg --json --fail-on HIGH --fail-on-inconclusive` |
+| Subset of checks | `sf audit security --target-org myOrg --json --checks guest-user-access,apex-sharing` |
+| See available check IDs | `sf audit list --json` |
+| Posture drift over time | `sf audit history --target-org myOrg --json` |
+| Compare two runs | `sf audit diff baseline.json current.json --json` |
+| Over-privileged connected apps | `sf audit apps --target-org myOrg --since 7 --json` |
+| Preserve free event logs | `sf audit events pull --target-org myOrg --json` |
+| Reconstruct an actor's activity | `sf audit timeline --window yesterday --seed ip:203.0.113.50 --json` |
 | Persist a report for later diffing | `sf audit security --target-org myOrg --format json --output ./reports` |
-| Over-privileged connected apps | `sf audit apps --target-org myOrg --since 7` |
-| Preserve free event logs | `sf audit events pull --target-org myOrg` |
-| Reconstruct an actor's activity | `sf audit timeline --window yesterday --seed ip:203.0.113.50` |
+| Terminal-readable audit *(for people)* | `sf audit security --target-org myOrg` |
+| Client-ready branded report *(for people)* | `sf audit security --target-org myOrg --format executive --prepared-for "Acme Ltd"` |
 
 Run any command with `--help` for its full flag set.
 
