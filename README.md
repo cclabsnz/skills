@@ -27,7 +27,8 @@ These skills drive real, published CLIs. They are read-only: SOQL, Tooling and
 REST **GET** queries. Nothing is written to the target org.
 
 - [`@cclabsnz/sf-audit`](https://www.npmjs.com/package/@cclabsnz/sf-audit) — 90-check
-  security audit with attack-chain correlation and compliance mapping
+  security audit with attack-chain correlation and compliance mapping. Ships `--json` and
+  `--digest` for agent-shaped output, and `sf audit preflight` to check coverage before a run
 
 ## Licence
 

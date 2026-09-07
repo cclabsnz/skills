@@ -24,12 +24,39 @@ sf org login web --alias myOrg      # if not already authenticated
 The plugin is JIT-installed — the first `sf audit` invocation may prompt for
 confirmation. Install explicitly, as above, before running unattended.
 
+## If you are an agent, run it like this
+
+Always pass the flags below. The defaults are tuned for a person reading a report in a
+terminal; without these you get 90 lines of progress logging, a timestamped file to hunt
+for, and a payload where most of the tokens are passing checks and prose you will not use.
+
+```bash
+# 1. Check what this audit user can actually establish — before spending a run
+sf audit preflight --target-org myOrg --json
+
+# 2. Audit, compact and machine-readable
+sf audit security --target-org myOrg --json --digest
+```
+
+| Flag | Why an agent wants it |
+|---|---|
+| `--json` | Result on stdout in a `{status, result, warnings}` envelope; progress logging suppressed. Errors arrive in the same shape, so you parse rather than scrape |
+| `--digest` | Drops passing checks and `detail` prose, caps affected-item lists. Roughly **15x smaller** — 617 KB to 41 KB on a 405-finding report |
+| `--fail-on-inconclusive` | Add when gating CI, so a blind audit fails loudly instead of reading as clean |
+
+Run `sf audit preflight` **first**, every time. It costs one query and tells you which
+checks will come back inconclusive. The audit itself can only report a permission gap
+after the run is already spent.
+
+Requires `@cclabsnz/sf-audit` 1.10.0 or later.
+
 ## Quick reference
 
 | Goal | Command |
 |---|---|
 | Full audit, human-readable | `sf audit security --target-org myOrg` |
-| Full audit, machine-readable | `sf audit security --target-org myOrg --json` |
+| Full audit, machine-readable | `sf audit security --target-org myOrg --json --digest` |
+| Check coverage before auditing | `sf audit preflight --target-org myOrg --json` |
 | Client-ready branded report | `sf audit security --target-org myOrg --format executive --prepared-for "Acme Ltd"` |
 | Gate a pipeline | `sf audit security --target-org myOrg --fail-on HIGH` |
 | Gate, and fail on blind spots too | `sf audit security --target-org myOrg --fail-on HIGH --fail-on-inconclusive` |
@@ -64,6 +91,11 @@ in the environment has the same effect when you cannot control the argv.
 
 A non-zero exit does not suppress the report: `--json --fail-on HIGH` returns the
 full result *and* exits 1, so read the envelope rather than inferring from the code.
+
+Add `--digest` for the compact shape: `counts` for every severity plus passed and
+inconclusive, active findings with `remediation` and `affectedCount`, inconclusive
+reduced to `checkId` + `title`, and `attackChains` intact. The exit code is still
+computed from the full result, so gating is unaffected by digesting.
 
 ### Exit codes
 
@@ -119,6 +151,8 @@ internals.
 |---|---|
 | Scraping progress logs off stdout | Pass `--json` — logging is suppressed and the result is the only output |
 | Using `--format json` to read results | That writes a timestamped file; `--json` puts it on stdout |
+| Auditing before checking coverage | Run `sf audit preflight` first — one query, and it names what will come back blind |
+| Reading the full result when you only need to act | Add `--digest`; the prose and affected lists are ~93% of the payload |
 | Running against production first | Start on a sandbox to size the output and confirm permissions |
 | `--format html` then asking the model to read it | Use `--json` for reasoning, `html`/`executive` for people |
 | Requesting `View All Data` to clear a blind spot | Only one probe needs it; it reports inconclusive by design |
