@@ -20,6 +20,7 @@ Works with Claude Code, Cursor, Codex, OpenCode, and anything else that reads
 | Skill | Use when |
 |---|---|
 | [`salesforce-org-audit`](skills/salesforce-org-audit) | Assessing the security posture of an org you inherited — due diligence, client security questionnaires, guest-user exposure, pre-go-live review, or reconstructing activity after an incident |
+| [`salesforce-org-intelligence`](skills/salesforce-org-intelligence) | Working out how an unfamiliar org actually works — where the business processes live, which objects are coupled by which automation, what it integrates with, and who uses it |
 
 ## The tools behind them
 
@@ -29,6 +30,9 @@ REST **GET** queries. Nothing is written to the target org.
 - [`@cclabsnz/sf-audit`](https://www.npmjs.com/package/@cclabsnz/sf-audit) — 90-check
   security audit with attack-chain correlation and compliance mapping. Ships `--json` and
   `--digest` for agent-shaped output, and `sf audit preflight` to check coverage before a run
+- [`@cclabsnz/sf-orgintel`](https://www.npmjs.com/package/@cclabsnz/sf-orgintel) — process,
+  coupling and integration analysis from metadata and behavioural data. Local-first and
+  deterministic: no metadata leaves the machine, no LLM calls, same org in, same findings out
 
 ## Licence
 
